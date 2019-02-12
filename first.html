@@ -1,0 +1,90 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+        <script>
+            var city_id;
+            function mysearch(city) {
+                
+                $.ajax({
+                    url: 'https://developers.zomato.com/api/v2.1/cities?q='+city,
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '9e2792ee24ff2f67e60cdbed8ba404f8');
+                    },
+                    success: function(data){
+                        //console.log(JSON.parse(data));
+                        console.log(JSON.stringify(data));    
+                       city_id=data.location_suggestions[0].id;
+                        console.log(city_id);
+                        $("#demo").text(city_id);
+                        //alert(data.responseText);
+                    },
+                    async:false
+                });
+                let dropdown = $('#cuisine-dropdown');
+
+                dropdown.empty();
+
+                dropdown.append('<option selected="true" disabled>Choose a Cuisine</option>');
+                dropdown.prop('selectedIndex', 0);
+                $.ajax({
+                    url: 'https://developers.zomato.com/api/v2.1/cuisines?city_id='+city_id,
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '9e2792ee24ff2f67e60cdbed8ba404f8');
+                    },
+                    success: function(data){
+                        //console.log(JSON.parse(data));
+                        //console.log(JSON.stringify(data));
+                        //console.log(data.cuisines[0].cuisine.cuisine_id);
+                        //alert(data.responseText);
+                        $.each(data.cuisines, function (key, entry) {
+                            dropdown.append($('<option></option>').attr('value', entry.cuisine.cuisine_id).text(entry.cuisine.cuisine_name));
+                        });
+                    }
+                });
+            }
+            function getResults() {
+                cuisineid = $( "#cuisine-dropdown" ).val();
+                $.ajax({
+                    url: 'https://developers.zomato.com/api/v2.1/search?entity_id=' + city_id +'&entity_type=city&count=10&cuisines='+ cuisineid +'&sort=rating&order=desc',
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '9e2792ee24ff2f67e60cdbed8ba404f8');
+                    },
+                    success: function(data){
+                        //console.log(JSON.stringify(data));
+                        //cityid = data.location_suggestions[0].id;
+                        document.write("<table border=1><tr><th>Name</th><th>Average Cost</th><th>Rating</th></tr>");
+                        $.each(data.restaurants, function (key, entry) {
+                            document.write("<tr><td>" + entry.restaurant.name +"</td><td>"+ entry.restaurant.average_cost_for_two +"</td><td>" + entry.restaurant.user_rating.aggregate_rating +"</td></tr>");
+                        })
+                        document.write('</table>');
+                    }
+                });
+            }
+        </script> 
+        
+    </head>
+    <body>
+        <form name="search">
+        City <input type="text" id="city">
+        <br><br><input type="button" value="get cuisine" onclick="mysearch(city.value);">
+        <br><br>
+        Cuisines<select id="cuisine-dropdown" name="cuisine">
+                    </select>
+        <!--<input type="text" id="cuisine">-->
+        <br><br>
+        
+        <input type="button" value="search" onclick="getResults(city.value);">
+        </form>
+        
+    </body>
+</html>
